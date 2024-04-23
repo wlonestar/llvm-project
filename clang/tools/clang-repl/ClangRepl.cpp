@@ -26,6 +26,27 @@
 #include "llvm/Support/TargetSelect.h"
 #include <optional>
 
+struct HelpInfo {
+  std::string command;
+  std::string doc;
+};
+
+static HelpInfo helpInfos[] = {
+    {"%quit", "exit the program"},
+    {"%undo", "undo previous input"},
+    {"%lib <lib>", "load a dynamic lib"},
+    {"%help", "print help info"},
+};
+
+void dump_help() {
+  llvm::errs() << "\nMulti-line input: end with '\\'\n\n";
+  llvm::errs() << "COMMANDS:\n\n";
+  for (auto helpInfo : helpInfos) {
+    llvm::errs() << "  " << helpInfo.command << "  \t-  " << helpInfo.doc
+                 << "\n";
+  }
+}
+
 // Disable LSan for this test.
 // FIXME: Re-enable once we can assume GCC 13.2 or higher.
 // https://llvm.org/github.com/llvm/llvm-project/issues/67586.
@@ -37,6 +58,8 @@ LLVM_ATTRIBUTE_USED int __lsan_is_turned_off() { return 1; }
 static llvm::cl::opt<bool> CudaEnabled("cuda", llvm::cl::Hidden);
 static llvm::cl::opt<std::string> CudaPath("cuda-path", llvm::cl::Hidden);
 static llvm::cl::opt<std::string> OffloadArch("offload-arch", llvm::cl::Hidden);
+
+static llvm::cl::opt<bool> OpenMPEnabled("openmp", llvm::cl::Hidden);
 
 static llvm::cl::list<std::string>
     ClangArgs("Xcc",
@@ -109,7 +132,7 @@ ReplListCompleter::operator()(llvm::StringRef Buffer, size_t Pos,
   std::vector<llvm::LineEditor::Completion> Comps;
   std::vector<std::string> Results;
 
-  auto CI = CB.CreateCpp();
+  auto CI = OpenMPEnabled ? CB.CreateCppOpenMP() : CB.CreateCpp();
   if (auto Err = CI.takeError()) {
     ErrRes = std::move(Err);
     return {};
@@ -186,7 +209,7 @@ int main(int argc, const char **argv) {
   if (CudaEnabled) {
     CI = ExitOnErr(CB.CreateCudaHost());
   } else {
-    CI = ExitOnErr(CB.CreateCpp());
+    CI = ExitOnErr(OpenMPEnabled ? CB.CreateCppOpenMP() : CB.CreateCpp());
   }
 
   // Set an error handler, so that any LLVM backend diagnostics go through our
@@ -231,7 +254,8 @@ int main(int argc, const char **argv) {
       if (L.ends_with("\\")) {
         // FIXME: Support #ifdef X \ ...
         Input += L.drop_back(1);
-        LE.setPrompt("clang-repl...   ");
+        Input += '\n';
+        LE.setPrompt("........... ");
         continue;
       }
 
@@ -239,7 +263,9 @@ int main(int argc, const char **argv) {
       if (Input == R"(%quit)") {
         break;
       }
-      if (Input == R"(%undo)") {
+      if (Input == R"(%help)") {
+        dump_help();
+      } else if (Input == R"(%undo)") {
         if (auto Err = Interp->Undo()) {
           llvm::logAllUnhandledErrors(std::move(Err), llvm::errs(), "error: ");
           HasError = true;

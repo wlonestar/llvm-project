@@ -50,6 +50,7 @@ public:
 
   // General C++
   llvm::Expected<std::unique_ptr<CompilerInstance>> CreateCpp();
+  llvm::Expected<std::unique_ptr<CompilerInstance>> CreateCppOpenMP();
 
   // Offload options
   void SetOffloadArch(llvm::StringRef Arch) { OffloadArch = Arch; };
@@ -103,6 +104,7 @@ public:
   const CompilerInstance *getCompilerInstance() const;
   CompilerInstance *getCompilerInstance();
   llvm::Expected<llvm::orc::LLJIT &> getExecutionEngine();
+  Sema &getSema() const;
 
   llvm::Expected<PartialTranslationUnit &> Parse(llvm::StringRef Code);
   llvm::Error Execute(PartialTranslationUnit &T);

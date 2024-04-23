@@ -206,6 +206,9 @@ LineEditor::LineEditor(StringRef ProgName, StringRef HistoryPath, FILE *In,
   Data->EL = ::el_init(ProgName.str().c_str(), In, Out, Err);
   assert(Data->EL);
 
+  // support Chinese input
+  setlocale(LC_ALL, "");
+
   ::el_set(Data->EL, EL_PROMPT, ElGetPromptFn);
   ::el_set(Data->EL, EL_EDITOR, "emacs");
   ::el_set(Data->EL, EL_HIST, history, Data->Hist);

@@ -189,6 +189,16 @@ IncrementalCompilerBuilder::CreateCpp() {
 }
 
 llvm::Expected<std::unique_ptr<CompilerInstance>>
+IncrementalCompilerBuilder::CreateCppOpenMP() {
+  std::vector<const char *> Argv;
+  Argv.reserve(5 + 2 + UserArgs.size());
+  Argv.push_back("-xc++");
+  Argv.push_back("-fopenmp");
+  Argv.insert(Argv.end(), UserArgs.begin(), UserArgs.end());
+  return IncrementalCompilerBuilder::create(Argv);
+}
+
+llvm::Expected<std::unique_ptr<CompilerInstance>>
 IncrementalCompilerBuilder::createCuda(bool device) {
   std::vector<const char *> Argv;
   Argv.reserve(5 + 4 + UserArgs.size());
@@ -335,6 +345,8 @@ llvm::Expected<llvm::orc::LLJIT &> Interpreter::getExecutionEngine() {
   return IncrExecutor->GetExecutionEngine();
 }
 
+Sema &Interpreter::getSema() const { return getCompilerInstance()->getSema(); }
+
 ASTContext &Interpreter::getASTContext() {
   return getCompilerInstance()->getASTContext();
 }
@@ -395,20 +407,26 @@ llvm::Error Interpreter::Execute(PartialTranslationUnit &T) {
 }
 
 llvm::Error Interpreter::ParseAndExecute(llvm::StringRef Code, Value *V) {
-
+  std::string name = Code.str();
   auto PTU = Parse(Code);
-  if (!PTU)
+  if (!PTU) {
     return PTU.takeError();
-  if (PTU->TheModule)
-    if (llvm::Error Err = Execute(*PTU))
+  }
+  // PTU->TheModule->print(llvm::errs(), nullptr);
+  if (PTU->TheModule) {
+    if (llvm::Error Err = Execute(*PTU)) {
       return Err;
+    }
+  }
 
   if (LastValue.isValid()) {
     if (!V) {
+      LastValue.setName(name);
       LastValue.dump();
       LastValue.clear();
-    } else
+    } else {
       *V = std::move(LastValue);
+    }
   }
   return llvm::Error::success();
 }
