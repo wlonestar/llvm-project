@@ -189,16 +189,6 @@ IncrementalCompilerBuilder::CreateCpp() {
 }
 
 llvm::Expected<std::unique_ptr<CompilerInstance>>
-IncrementalCompilerBuilder::CreateCppOpenMP() {
-  std::vector<const char *> Argv;
-  Argv.reserve(5 + 2 + UserArgs.size());
-  Argv.push_back("-xc++");
-  Argv.push_back("-fopenmp");
-  Argv.insert(Argv.end(), UserArgs.begin(), UserArgs.end());
-  return IncrementalCompilerBuilder::create(Argv);
-}
-
-llvm::Expected<std::unique_ptr<CompilerInstance>>
 IncrementalCompilerBuilder::createCuda(bool device) {
   std::vector<const char *> Argv;
   Argv.reserve(5 + 4 + UserArgs.size());
@@ -412,6 +402,7 @@ llvm::Error Interpreter::ParseAndExecute(llvm::StringRef Code, Value *V) {
   if (!PTU) {
     return PTU.takeError();
   }
+  // PTU->TUPart->dump();
   // PTU->TheModule->print(llvm::errs(), nullptr);
   if (PTU->TheModule) {
     if (llvm::Error Err = Execute(*PTU)) {

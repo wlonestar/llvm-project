@@ -267,6 +267,36 @@ void Value::printData(llvm::raw_ostream &Out) const {
 
 void Value::print(llvm::raw_ostream &Out) const {
   assert(OpaqueType != nullptr && "Can't print default Value");
-  Out << "(" << GetFullTypeName(getASTContext(), getType()) << ")" << ' '
-      << printValueInternal() << "\n";
+  std::ostringstream ostr;
+  ostr << "(" << GetFullTypeName(getASTContext(), getType()) << ")" << ' '
+       << printValueInternal() /* << "\n" */;
+
+  // if (!color) {
+  Out << ostr.str() << '\n';
+  // } else {
+  //   int fd[2];
+  //   if (pipe(fd) == -1) {
+  //     exit(-1);
+  //   }
+  //   pid_t pid = fork();
+  //   if (pid == -1) {
+  //     exit(-1);
+  //   }
+  //   if (pid == 0) {
+  //     close(fd[1]);
+  //     dup2(fd[0], 0);
+  //     execlp("python3", "python3", "syntax.py", NULL);
+
+  //     perror("execlp");
+  //     exit(-1);
+  //   } else {
+  //     close(fd[0]);
+  //     std::string data = ostr.str() + "\n";
+  //     if (write(fd[1], data.c_str(), data.size()) == -1) {
+  //       perror("write");
+  //       exit(-1);
+  //     }
+  //     wait(nullptr);
+  //   }
+  // }
 }

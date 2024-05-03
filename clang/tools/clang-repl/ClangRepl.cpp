@@ -59,8 +59,6 @@ static llvm::cl::opt<bool> CudaEnabled("cuda", llvm::cl::Hidden);
 static llvm::cl::opt<std::string> CudaPath("cuda-path", llvm::cl::Hidden);
 static llvm::cl::opt<std::string> OffloadArch("offload-arch", llvm::cl::Hidden);
 
-static llvm::cl::opt<bool> OpenMPEnabled("openmp", llvm::cl::Hidden);
-
 static llvm::cl::list<std::string>
     ClangArgs("Xcc",
               llvm::cl::desc("Argument to pass to the CompilerInvocation"),
@@ -132,7 +130,7 @@ ReplListCompleter::operator()(llvm::StringRef Buffer, size_t Pos,
   std::vector<llvm::LineEditor::Completion> Comps;
   std::vector<std::string> Results;
 
-  auto CI = OpenMPEnabled ? CB.CreateCppOpenMP() : CB.CreateCpp();
+  auto CI = CB.CreateCpp();
   if (auto Err = CI.takeError()) {
     ErrRes = std::move(Err);
     return {};
@@ -209,7 +207,7 @@ int main(int argc, const char **argv) {
   if (CudaEnabled) {
     CI = ExitOnErr(CB.CreateCudaHost());
   } else {
-    CI = ExitOnErr(OpenMPEnabled ? CB.CreateCppOpenMP() : CB.CreateCpp());
+    CI = ExitOnErr(CB.CreateCpp());
   }
 
   // Set an error handler, so that any LLVM backend diagnostics go through our
@@ -255,7 +253,7 @@ int main(int argc, const char **argv) {
         // FIXME: Support #ifdef X \ ...
         Input += L.drop_back(1);
         Input += '\n';
-        LE.setPrompt("........... ");
+        LE.setPrompt("...........");
         continue;
       }
 
@@ -281,7 +279,7 @@ int main(int argc, const char **argv) {
       }
 
       Input = "";
-      LE.setPrompt("clang-repl> ");
+      LE.setPrompt("clang-repl>");
     }
   }
 

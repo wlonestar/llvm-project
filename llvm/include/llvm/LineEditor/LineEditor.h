@@ -19,6 +19,8 @@
 
 namespace llvm {
 
+#define PROMPT_WRAP(__str__) "\1\033[1;94m\1" + __str__ + "\1\033[0m\1"
+
 class LineEditor {
 public:
   /// Create a LineEditor object.
@@ -103,7 +105,7 @@ public:
   CompletionAction getCompletionAction(StringRef Buffer, size_t Pos) const;
 
   const std::string &getPrompt() const { return Prompt; }
-  void setPrompt(const std::string &P) { Prompt = P; }
+  void setPrompt(const std::string &P) { Prompt = PROMPT_WRAP(P) + " "; }
 
   // Public so callbacks in LineEditor.cpp can use it.
   struct InternalData;

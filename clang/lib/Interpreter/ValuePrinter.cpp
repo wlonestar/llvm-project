@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ValuePrinter.h"
+#include "InterpreterUtils.h"
 #include "clang/AST/Type.h"
 #include <map>
 #include <sstream>
@@ -274,72 +275,120 @@ std::string printValue(const long double *ptr) {
 }
 
 REPL_EXTERNAL_VISIBILITY
-std::string printValue(char *ptr, bool seq) {
+std::string printValue(char *ptr, bool seq, size_t size) {
   std::string value = "\"";
   char *p = ptr;
-  while (*p != '\0') {
-    value += *p;
-    p++;
+  size_t idx = 0;
+  if (size != 0) {
+    while (idx < size) {
+      value += *(p + idx);
+      idx++;
+    }
+  } else {
+    while (*p != '\0') {
+      value += *p;
+      p++;
+    }
   }
   value += "\"";
   return value;
 }
 
 REPL_EXTERNAL_VISIBILITY
-std::string printValue(signed char *ptr, bool seq) {
+std::string printValue(signed char *ptr, bool seq, size_t size) {
   std::string value = "\"";
   signed char *p = ptr;
-  while (*p != '\0') {
-    value += *p;
-    p++;
+  size_t idx = 0;
+  if (size != 0) {
+    while (idx < size) {
+      value += *(p + idx);
+      idx++;
+    }
+  } else {
+    while (*p != '\0') {
+      value += *p;
+      p++;
+    }
   }
   value += "\"";
   return value;
 }
 
 REPL_EXTERNAL_VISIBILITY
-std::string printValue(unsigned char *ptr, bool seq) {
+std::string printValue(unsigned char *ptr, bool seq, size_t size) {
   std::string value = "\"";
   unsigned char *p = ptr;
-  while (*p != '\0') {
-    value += *p;
-    p++;
+  size_t idx = 0;
+  if (size != 0) {
+    while (idx < size) {
+      value += *(p + idx);
+      idx++;
+    }
+  } else {
+    while (*p != '\0') {
+      value += *p;
+      p++;
+    }
   }
   value += "\"";
   return value;
 }
 
 REPL_EXTERNAL_VISIBILITY
-std::string printValue(wchar_t *ptr, bool seq) {
+std::string printValue(wchar_t *ptr, bool seq, size_t size) {
   std::wstring value;
   wchar_t *p = ptr;
-  while (*p != '\0') {
-    value += *p;
-    p++;
+  size_t idx = 0;
+  if (size != 0) {
+    while (idx < size) {
+      value += *(p + idx);
+      idx++;
+    }
+  } else {
+    while (*p != '\0') {
+      value += *p;
+      p++;
+    }
   }
   std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
   return "\"" + converter.to_bytes(value) + "\"";
 }
 
 REPL_EXTERNAL_VISIBILITY
-std::string printValue(char16_t *ptr, bool seq) {
+std::string printValue(char16_t *ptr, bool seq, size_t size) {
   std::u16string value;
   char16_t *p = ptr;
-  while (*p != '\0') {
-    value += *p;
-    p++;
+  size_t idx = 0;
+  if (size != 0) {
+    while (idx < size) {
+      value += *(p + idx);
+      idx++;
+    }
+  } else {
+    while (*p != '\0') {
+      value += *p;
+      p++;
+    }
   }
   std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
   return "\"" + converter.to_bytes(value) + "\"";
 }
 
 REPL_EXTERNAL_VISIBILITY
-std::string printValue(char32_t *ptr, bool seq) {
+std::string printValue(char32_t *ptr, bool seq, size_t size) {
   std::u32string value;
   char32_t *p = ptr;
-  while (*p != '\0') {
-    value += *p;
-    p++;
+  size_t idx = 0;
+  if (size != 0) {
+    while (idx < size) {
+      value += *(p + idx);
+      idx++;
+    }
+  } else {
+    while (*p != '\0') {
+      value += *p;
+      p++;
+    }
   }
   std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
   return "\"" + converter.to_bytes(value) + "\"";
@@ -528,23 +577,22 @@ bool isCharType(const Type *type) {
   return false;
 }
 
-std::string printCharArray(void *ptr, QualType Type) {
-  if (const BuiltinType *bt =
-      llvm::dyn_cast<BuiltinType>(Type.getTypePtr())) {
+std::string printCharArray(void *ptr, QualType Type, size_t size) {
+  if (const BuiltinType *bt = llvm::dyn_cast<BuiltinType>(Type.getTypePtr())) {
     BuiltinType::Kind Kind = bt->getKind();
     switch (Kind) {
     case BuiltinType::Char_U:
     case BuiltinType::UChar:
-      return printValue((unsigned char *)ptr, true);
+      return printValue((unsigned char *)ptr, true, size);
     case BuiltinType::Char_S:
     case BuiltinType::SChar:
-      return printValue((signed char *)ptr, true);
+      return printValue((signed char *)ptr, true, size);
     case BuiltinType::WChar_S:
-      return printValue((wchar_t *)ptr, true);
+      return printValue((wchar_t *)ptr, true, size);
     case BuiltinType::Char16:
-      return printValue((char16_t *)ptr, true);
+      return printValue((char16_t *)ptr, true, size);
     case BuiltinType::Char32:
-      return printValue((char32_t *)ptr, true);
+      return printValue((char32_t *)ptr, true, size);
     default:
       break;
     }
@@ -563,14 +611,14 @@ std::string printArray(void *ptr, const Value &V, const ASTContext &C,
 
       /// for typedef \c char[]
       if (isCharType(elemType.getTypePtr())) {
-        return printCharArray(ptr, elemType);
+        return printCharArray(ptr, elemType, arraySize);
       }
-      
+
       std::ostringstream ostr;
       ostr << "{ ";
 
       /// for typedef \c char*[]
-      if (elemType->isPointerType()) { 
+      if (elemType->isPointerType()) {
         if (isCharType(elemType->getPointeeType().getTypePtr())) {
           for (uint64_t i = 0; i < arraySize; i++) {
             void *elemPtr =
@@ -605,7 +653,7 @@ std::string printArray(void *ptr, const Value &V, const ASTContext &C,
     }
     /// for typedef \c char*
     if (isCharType(elemType.getTypePtr())) {
-      return printCharArray(ptr, elemType);
+      return printCharArray(ptr, elemType, 0);
     }
   }
   return "";
@@ -1153,6 +1201,7 @@ std::string printRecord(void *ptr, const Value &V, const ASTContext &C,
     size_t offset = C.getFieldOffset(field) /* bits */ / 8;
     void *fieldPtr = (void *)((char *)ptr + offset);
     values << field->getNameAsString() << ": "
+           << "(" << GetFullTypeName(C, fieldType) << ")" << ' '
            << printValuePtr(fieldPtr, V, C, fieldType);
     if (++tmp != E) {
       values << ", ";

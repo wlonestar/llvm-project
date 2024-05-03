@@ -192,8 +192,8 @@ unsigned char ElCompletionFn(EditLine *EL, int ch) {
 
 LineEditor::LineEditor(StringRef ProgName, StringRef HistoryPath, FILE *In,
                        FILE *Out, FILE *Err)
-    : Prompt((ProgName + "> ").str()), HistoryPath(std::string(HistoryPath)),
-      Data(new InternalData) {
+    : Prompt(PROMPT_WRAP((ProgName + ">").str()) + " "),
+      HistoryPath(std::string(HistoryPath)), Data(new InternalData) {
   if (HistoryPath.empty())
     this->HistoryPath = getDefaultHistoryPath(ProgName);
 
@@ -209,7 +209,7 @@ LineEditor::LineEditor(StringRef ProgName, StringRef HistoryPath, FILE *In,
   // support Chinese input
   setlocale(LC_ALL, "");
 
-  ::el_set(Data->EL, EL_PROMPT, ElGetPromptFn);
+  ::el_set(Data->EL, EL_PROMPT_ESC, ElGetPromptFn, '\1');
   ::el_set(Data->EL, EL_EDITOR, "emacs");
   ::el_set(Data->EL, EL_HIST, history, Data->Hist);
   ::el_set(Data->EL, EL_ADDFN, "tab_complete", "Tab completion function",
@@ -288,9 +288,7 @@ LineEditor::LineEditor(StringRef ProgName, StringRef HistoryPath, FILE *In,
   Data->Out = Out;
 }
 
-LineEditor::~LineEditor() {
-  ::fwrite("\n", 1, 1, Data->Out);
-}
+LineEditor::~LineEditor() { ::fwrite("\n", 1, 1, Data->Out); }
 
 void LineEditor::saveHistory() {}
 void LineEditor::loadHistory() {}

@@ -50,7 +50,6 @@ public:
 
   // General C++
   llvm::Expected<std::unique_ptr<CompilerInstance>> CreateCpp();
-  llvm::Expected<std::unique_ptr<CompilerInstance>> CreateCppOpenMP();
 
   // Offload options
   void SetOffloadArch(llvm::StringRef Arch) { OffloadArch = Arch; };
