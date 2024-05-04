@@ -21,6 +21,7 @@
 #include "llvm/Support/raw_os_ostream.h"
 #include <cassert>
 #include <cstdint>
+#include <sstream>
 #include <utility>
 
 using namespace clang;
