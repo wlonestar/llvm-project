@@ -1,0 +1,11 @@
+{
+  "display_name": "C++11",
+  "argv": [
+      "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/@EXECUTABLE_NAME@",
+      "-f",
+      "{connection_file}",
+      "-Xcc",
+      "-std=c++11"
+  ],
+  "language": "C++"
+}

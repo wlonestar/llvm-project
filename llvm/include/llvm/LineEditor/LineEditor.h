@@ -19,6 +19,8 @@
 
 namespace llvm {
 
+#define PROMPT_WRAP(__str__) "\1\033[1;94m\1" + __str__ + "\1\033[0m\1"
+
 class LineEditor {
 public:
   /// Create a LineEditor object.
@@ -103,7 +105,7 @@ public:
   CompletionAction getCompletionAction(StringRef Buffer, size_t Pos) const;
 
   const std::string &getPrompt() const { return Prompt; }
-  void setPrompt(const std::string &P) { Prompt = P; }
+  void setPrompt(const std::string &P) { Prompt = PROMPT_WRAP(P) + " "; }
 
   // Public so callbacks in LineEditor.cpp can use it.
   struct InternalData;
@@ -126,8 +128,7 @@ private:
                                                    size_t Pos) const = 0;
   };
 
-  template <typename T>
-  struct CompleterModel : CompleterConcept {
+  template <typename T> struct CompleterModel : CompleterConcept {
     CompleterModel(T Value) : Value(Value) {}
     CompletionAction complete(StringRef Buffer, size_t Pos) const override {
       return Value(Buffer, Pos);
@@ -135,8 +136,7 @@ private:
     T Value;
   };
 
-  template <typename T>
-  struct ListCompleterModel : ListCompleterConcept {
+  template <typename T> struct ListCompleterModel : ListCompleterConcept {
     ListCompleterModel(T Value) : Value(std::move(Value)) {}
     std::vector<Completion> getCompletions(StringRef Buffer,
                                            size_t Pos) const override {
@@ -148,6 +148,6 @@ private:
   std::unique_ptr<const CompleterConcept> Completer;
 };
 
-}
+} // namespace llvm
 
 #endif

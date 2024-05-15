@@ -1,0 +1,11 @@
+{
+  "display_name": "C++ OMP",
+  "argv": [
+      "/home/wjl/miniconda3/envs/kernel/bin/clang_kernel",
+      "-f",
+      "{connection_file}",
+      "-Xcc",
+      "-std=c++20,-fopenmp"
+  ],
+  "language": "C++"
+}

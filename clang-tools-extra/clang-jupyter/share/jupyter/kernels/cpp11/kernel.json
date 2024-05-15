@@ -1,0 +1,11 @@
+{
+  "display_name": "C++11",
+  "argv": [
+      "/home/wjl/miniconda3/envs/kernel/bin/clang_kernel",
+      "-f",
+      "{connection_file}",
+      "-Xcc",
+      "-std=c++11"
+  ],
+  "language": "C++"
+}

@@ -34,7 +34,9 @@
 #define LLVM_CLANG_INTERPRETER_VALUE_H
 
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cstdint>
+#include <string>
 
 // NOTE: Since the REPL itself could also include this runtime, extreme caution
 // should be taken when MAKING CHANGES to this file, especially when INCLUDE NEW
@@ -77,6 +79,9 @@ class QualType;
   X(char, Char_S)                                                              \
   X(signed char, SChar)                                                        \
   X(unsigned char, UChar)                                                      \
+  X(wchar_t, WChar_S)                                                          \
+  X(char16_t, Char16)                                                          \
+  X(char32_t, Char32)                                                          \
   X(short, Short)                                                              \
   X(unsigned short, UShort)                                                    \
   X(int, Int)                                                                  \
@@ -103,7 +108,7 @@ public:
     REPL_BUILTIN_TYPES
 #undef X
 
-    K_Void,
+        K_Void,
     K_PtrOrObj,
     K_Unspecified
   };
@@ -116,16 +121,18 @@ public:
   Value &operator=(Value &&RHS) noexcept;
   ~Value();
 
+  std::string printValueInternal() const;
+
   void printType(llvm::raw_ostream &Out) const;
   void printData(llvm::raw_ostream &Out) const;
-  void print(llvm::raw_ostream &Out) const;
+  std::string print(llvm::raw_ostream &Out = llvm::outs()) const;
   void dump() const;
   void clear();
 
   ASTContext &getASTContext();
   const ASTContext &getASTContext() const;
   Interpreter &getInterpreter();
-  const Interpreter &getInterpreter() const;
+  Interpreter &getInterpreter() const;
   QualType getType() const;
 
   bool isValid() const { return ValueKind != K_Unspecified; }
@@ -135,6 +142,8 @@ public:
   Kind getKind() const { return ValueKind; }
   void setKind(Kind K) { ValueKind = K; }
   void setOpaqueType(void *Ty) { OpaqueType = Ty; }
+  void setName(std::string name) { Name = name; }
+  std::string getName() const { return Name; }
 
   void *getPtr() const;
   void setPtr(void *Ptr) { Data.m_Ptr = Ptr; }
@@ -196,6 +205,7 @@ protected:
   Storage Data;
   Kind ValueKind = K_Unspecified;
   bool IsManuallyAlloc = false;
+  std::string Name;
 };
 
 template <> inline void *Value::as() const {

@@ -1,0 +1,11 @@
+{
+  "display_name": "C++ OMP",
+  "argv": [
+      "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/@EXECUTABLE_NAME@",
+      "-f",
+      "{connection_file}",
+      "-Xcc",
+      "-std=c++20,-fopenmp"
+  ],
+  "language": "C++"
+}
